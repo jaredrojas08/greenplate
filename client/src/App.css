@@ -6,10 +6,32 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #e0f2f1 0%, #e8f5e9 50%, #f1f8e9 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite;
+  width: 100%;
+  min-height: 100vh;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
 }
 
 .App {
+  width: 100%;
   min-height: 100vh;
 }
 
@@ -25,6 +47,8 @@ body {
 
 .navbar h1 {
   font-size: 1.5rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 .nav-links {
@@ -40,6 +64,10 @@ body {
 }
 
 .nav-links a:hover {
+  opacity: 0.8;
+}
+
+.navbar h1:hover {
   opacity: 0.8;
 }
 
@@ -66,6 +94,33 @@ body {
   margin-bottom: 2rem;
 }
 
+.hero-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 2.5rem;
+  color: #2d5016;
+  margin-bottom: 1rem;
+}
+
+.plant-emoji {
+  font-size: 3rem;
+  animation: wiggle 3s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
 .search-form {
   display: flex;
   gap: 1rem;
@@ -79,6 +134,21 @@ body {
   border: 2px solid #ddd;
   border-radius: 8px;
   font-size: 1rem;
+}
+
+.clear-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #666;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clear-button:hover {
+  background-color: #555;
 }
 
 .search-form button {
@@ -181,12 +251,13 @@ body {
 }
 
 .eco-score-large {
-  background-color: #f0f0f0;
+  background-color: #e8f5e9;
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
   font-weight: 600;
   font-size: 1.2rem;
+  color: #2d5016;
 }
 
 .eco-explanation {
@@ -212,6 +283,12 @@ body {
   background-color: #ff5252;
 }
 
+.favorite-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .recipe-content {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -230,10 +307,12 @@ body {
 }
 
 .ingredients-section li {
-  padding: 0.5rem;
+  padding: 0.75rem;
   background-color: #f9f9f9;
   margin-bottom: 0.5rem;
   border-radius: 4px;
+  color: #333;
+  font-size: 1rem;
 }
 
 .instructions-section p {
@@ -341,4 +420,5 @@ body {
   .favorites-grid {
     grid-template-columns: 1fr;
   }
+
 }

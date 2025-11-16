@@ -3,7 +3,6 @@ import { Recipe } from '../types';
 
 const router = express.Router();
 
-// Mock data
 const mockRecipes: Recipe[] = [
   {
     id: '1',
@@ -31,23 +30,29 @@ const mockRecipes: Recipe[] = [
   },
 ];
 
-// GET - Get all recipes or search by ingredient
 router.get('/', (req: Request, res: Response) => {
   const { ingredient } = req.query;
   
   if (ingredient) {
+    const searchTerms = (ingredient as string)
+      .split(',')
+      .map(term => term.trim().toLowerCase())
+      .filter(term => term.length > 0);
+    
     const filtered = mockRecipes.filter(recipe =>
-      recipe.ingredients.some(ing => 
-        ing.toLowerCase().includes((ingredient as string).toLowerCase())
+      searchTerms.every(searchTerm =>
+        recipe.ingredients.some(ing => 
+          ing.toLowerCase().includes(searchTerm)
+        )
       )
     );
+    
     res.json(filtered);
   } else {
     res.json(mockRecipes);
   }
 });
 
-// GET - Get single recipe by ID
 router.get('/:id', (req: Request, res: Response) => {
   const { id } = req.params;
   const recipe = mockRecipes.find(r => r.id === id);
@@ -59,7 +64,6 @@ router.get('/:id', (req: Request, res: Response) => {
   }
 });
 
-// POST - Create a new recipe
 router.post('/', (req: Request, res: Response) => {
   const newRecipe: Recipe = req.body;
   res.status(201).json({ 

@@ -37,7 +37,7 @@ A web application that helps users discover recipes based on ingredients they al
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/greenplate.git
+git clone https://github.com/jaredrojas08/greenplate.git
 cd greenplate
 ```
 
@@ -105,8 +105,4 @@ greenplate/
 
 ## Authors
 
-- Jared - Cornell University
-
-## License
-
-This project is for educational purposes as part of Cornell's Trends in Web Development course.
+- Jared Manuel Rojas

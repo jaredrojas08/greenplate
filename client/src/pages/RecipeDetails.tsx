@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Recipe } from '../types';
+import type { Recipe, Favorite } from '../types';
 
 const RecipeDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -16,6 +17,13 @@ const RecipeDetails = () => {
           const data = await response.json();
           setRecipe(data);
         }
+        
+        // Check if already favorited
+        const favResponse = await fetch('http://localhost:8080/favorites?userId=user1');
+        const favorites = await favResponse.json();
+        const alreadyFavorited = favorites.some((fav: Favorite) => fav.recipeId === id);
+        setIsFavorited(alreadyFavorited);
+        
       } catch (error) {
         console.error('Error fetching recipe:', error);
       } finally {
@@ -27,6 +35,10 @@ const RecipeDetails = () => {
   }, [id]);
 
   const handleAddToFavorites = async () => {
+    if (isFavorited) {
+      return;
+    }
+    
     try {
       const response = await fetch('http://localhost:8080/favorites', {
         method: 'POST',
@@ -40,7 +52,7 @@ const RecipeDetails = () => {
       });
 
       if (response.ok) {
-        alert('Added to favorites!');
+        setIsFavorited(true);
       }
     } catch (error) {
       console.error('Error adding to favorites:', error);
@@ -68,8 +80,12 @@ const RecipeDetails = () => {
               {recipe.ecoScore > 6 && '🥩 Higher impact'}
             </span>
           </div>
-          <button onClick={handleAddToFavorites} className="favorite-button">
-            ❤️ Add to Favorites
+          <button 
+            onClick={handleAddToFavorites} 
+            className="favorite-button"
+            disabled={isFavorited}
+          >
+            {isFavorited ? '✓ Already Favorited' : '❤️ Add to Favorites'}
           </button>
         </div>
       </div>

@@ -9,7 +9,9 @@ function App() {
     <Router>
       <div className="App">
         <nav className="navbar">
-          <h1>🌱 GreenPlate</h1>
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <h1>🌱 GreenPlate</h1>
+          </Link>
           <div className="nav-links">
             <Link to="/">Home</Link>
             <Link to="/profile">Profile</Link>

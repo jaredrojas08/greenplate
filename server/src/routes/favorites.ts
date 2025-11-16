@@ -3,7 +3,6 @@ import { Favorite } from '../types';
 
 const router = express.Router();
 
-// Mock favorites data
 let mockFavorites: Favorite[] = [
   {
     id: 'fav1',
@@ -13,7 +12,6 @@ let mockFavorites: Favorite[] = [
   },
 ];
 
-// GET - Get all favorites for a user
 router.get('/', (req: Request, res: Response) => {
   const { userId } = req.query;
   
@@ -25,7 +23,6 @@ router.get('/', (req: Request, res: Response) => {
   }
 });
 
-// POST - Add a favorite
 router.post('/', (req: Request, res: Response) => {
   const { userId, recipeId } = req.body;
   
@@ -40,7 +37,6 @@ router.post('/', (req: Request, res: Response) => {
   res.status(201).json(newFavorite);
 });
 
-// PUT - Update a favorite
 router.put('/:id', (req: Request, res: Response) => {
   const { id } = req.params;
   res.json({ 
@@ -49,7 +45,6 @@ router.put('/:id', (req: Request, res: Response) => {
   });
 });
 
-// DELETE - Remove a favorite
 router.delete('/:id', (req: Request, res: Response) => {
   const { id } = req.params;
   

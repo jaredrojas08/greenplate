@@ -8,8 +8,9 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchRecipes();
-  }, []);
+  setSearchIngredient('');
+  fetchRecipes();
+}, []);
 
   const fetchRecipes = async (ingredient?: string) => {
     setLoading(true);
@@ -42,17 +43,32 @@ const Home = () => {
   return (
     <div className="home-page">
       <div className="hero-section">
-        <h1>Find Sustainable Recipes</h1>
+        <h1 className="hero-title">
+            <span className="plant-emoji">🌿</span>
+                Find Sustainable Recipes
+            <span className="plant-emoji">🌿</span>
+        </h1>
         <p>Discover delicious recipes and their environmental impact</p>
-        
         <form onSubmit={handleSearch} className="search-form">
-          <input
-            type="text"
-            placeholder="Search by ingredient (e.g., pasta, chickpeas)"
-            value={searchIngredient}
-            onChange={(e) => setSearchIngredient(e.target.value)}
-          />
-          <button type="submit">Search</button>
+            <input
+                type="text"
+                placeholder="Search by ingredients (e.g., pasta, tomatoes, basil)"
+                value={searchIngredient}
+                onChange={(e) => setSearchIngredient(e.target.value)}
+            />
+            <button type="submit">Search</button>
+                {searchIngredient && (
+            <button 
+                type="button" 
+                onClick={() => {
+                setSearchIngredient('');
+                fetchRecipes();
+            }}
+        className="clear-button"
+            >
+            Clear
+            </button>
+        )}
         </form>
       </div>
 

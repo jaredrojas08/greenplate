@@ -1,4 +1,3 @@
-// Recipe type
 export type Recipe = {
   id: string;
   name: string;
@@ -8,7 +7,6 @@ export type Recipe = {
   imageUrl?: string;
 };
 
-// Favorite type
 export type Favorite = {
   id: string;
   userId: string;
