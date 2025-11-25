@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import type { Recipe, Favorite } from '../types';
 
 const RecipeDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, signInWithGoogle } = useAuth();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
@@ -17,12 +19,14 @@ const RecipeDetails = () => {
           const data = await response.json();
           setRecipe(data);
         }
-        
-        const favResponse = await fetch('http://localhost:8080/favorites?userId=user1');
-        const favorites = await favResponse.json();
-        const alreadyFavorited = favorites.some((fav: Favorite) => fav.recipeId === id);
-        setIsFavorited(alreadyFavorited);
-        
+
+        if (user) {
+          const favResponse = await fetch(`http://localhost:8080/favorites?userId=${user.uid}`);
+          const favorites = await favResponse.json();
+          const alreadyFavorited = favorites.some((fav: Favorite) => fav.recipeId === id);
+          setIsFavorited(alreadyFavorited);
+        }
+
       } catch (error) {
         console.error('Error fetching recipe:', error);
       } finally {
@@ -31,13 +35,18 @@ const RecipeDetails = () => {
     };
 
     fetchRecipe();
-  }, [id]);
+  }, [id, user]);
 
   const handleAddToFavorites = async () => {
+    if (!user) {
+      signInWithGoogle();
+      return;
+    }
+
     if (isFavorited) {
       return;
     }
-    
+
     try {
       const response = await fetch('http://localhost:8080/favorites', {
         method: 'POST',
@@ -45,7 +54,7 @@ const RecipeDetails = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: 'user1',
+          userId: user.uid,
           recipeId: id,
         }),
       });
@@ -79,12 +88,12 @@ const RecipeDetails = () => {
               {recipe.ecoScore > 6 && '🥩 Higher impact'}
             </span>
           </div>
-          <button 
-            onClick={handleAddToFavorites} 
+          <button
+            onClick={handleAddToFavorites}
             className="favorite-button"
             disabled={isFavorited}
           >
-            {isFavorited ? '✓ Already Favorited' : '❤️ Add to Favorites'}
+            {isFavorited ? '✓ Already Favorited' : user ? '❤️ Add to Favorites' : '🔒 Sign in to Favorite'}
           </button>
         </div>
       </div>
