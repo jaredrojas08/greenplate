@@ -18,7 +18,6 @@ const RecipeDetails = () => {
           setRecipe(data);
         }
         
-        // Check if already favorited
         const favResponse = await fetch('http://localhost:8080/favorites?userId=user1');
         const favorites = await favResponse.json();
         const alreadyFavorited = favorites.some((fav: Favorite) => fav.recipeId === id);
