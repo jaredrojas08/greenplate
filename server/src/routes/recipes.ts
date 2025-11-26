@@ -1,38 +1,56 @@
 import express, { Request, Response } from 'express';
 import { db } from '../firebase';
 import { Recipe } from '../types';
+import { searchRecipesWithDetails, getRandomRecipes } from '../services/spoonacular';
 
 const router = express.Router();
 
 // GET all recipes or search by ingredient
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { ingredient } = req.query;
-    const recipesRef = db.collection('recipes');
-    const snapshot = await recipesRef.get();
+    const { ingredient, limit } = req.query;
+    const recipeLimit = limit ? parseInt(limit as string) : 6;
 
-    const recipes: Recipe[] = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Recipe));
+    // Try Spoonacular API first, fallback to Firestore if quota exceeded
+    try {
+      if (ingredient) {
+        const ingredients = (ingredient as string).trim();
+        const recipes = await searchRecipesWithDetails(ingredients, recipeLimit);
+        res.json(recipes);
+      } else {
+        const recipes = await getRandomRecipes(recipeLimit);
+        res.json(recipes);
+      }
+    } catch (apiError: any) {
+      // If API quota exceeded, fallback to Firestore
+      console.log('Spoonacular API error, falling back to Firestore:', apiError.message);
 
-    if (ingredient) {
-      const searchTerms = (ingredient as string)
-        .split(',')
-        .map(term => term.trim().toLowerCase())
-        .filter(term => term.length > 0);
+      const recipesRef = db.collection('recipes');
+      const snapshot = await recipesRef.get();
 
-      const filtered = recipes.filter(recipe =>
-        searchTerms.every(searchTerm =>
-          recipe.ingredients.some(ing =>
-            ing.toLowerCase().includes(searchTerm)
+      const recipes: Recipe[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Recipe));
+
+      if (ingredient) {
+        const searchTerms = (ingredient as string)
+          .split(',')
+          .map(term => term.trim().toLowerCase())
+          .filter(term => term.length > 0);
+
+        const filtered = recipes.filter(recipe =>
+          searchTerms.every(searchTerm =>
+            recipe.ingredients.some(ing =>
+              ing.toLowerCase().includes(searchTerm)
+            )
           )
-        )
-      );
+        );
 
-      res.json(filtered);
-    } else {
-      res.json(recipes);
+        res.json(filtered);
+      } else {
+        res.json(recipes);
+      }
     }
   } catch (error) {
     console.error('Error fetching recipes:', error);
@@ -44,19 +62,30 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const recipeDoc = await db.collection('recipes').doc(id).get();
 
-    if (!recipeDoc.exists) {
-      res.status(404).json({ error: 'Recipe not found' });
-      return;
+    // Try Spoonacular API first, fallback to Firestore if quota exceeded
+    try {
+      const { getRecipeDetails } = await import('../services/spoonacular');
+      const recipe = await getRecipeDetails(Number(id));
+      res.json(recipe);
+    } catch (apiError: any) {
+      // If API quota exceeded, try Firestore
+      console.log('Spoonacular API error, trying Firestore:', apiError.message);
+
+      const recipeDoc = await db.collection('recipes').doc(id).get();
+
+      if (!recipeDoc.exists) {
+        res.status(404).json({ error: 'Recipe not found' });
+        return;
+      }
+
+      const recipe: Recipe = {
+        id: recipeDoc.id,
+        ...recipeDoc.data()
+      } as Recipe;
+
+      res.json(recipe);
     }
-
-    const recipe: Recipe = {
-      id: recipeDoc.id,
-      ...recipeDoc.data()
-    } as Recipe;
-
-    res.json(recipe);
   } catch (error) {
     console.error('Error fetching recipe:', error);
     res.status(500).json({ error: 'Failed to fetch recipe' });
