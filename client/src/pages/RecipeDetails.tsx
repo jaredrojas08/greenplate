@@ -110,7 +110,7 @@ const RecipeDetails = () => {
 
         <div className="instructions-section">
           <h2>Instructions</h2>
-          <p>{recipe.instructions}</p>
+          <p dangerouslySetInnerHTML={{ __html: recipe.instructions }}></p>
         </div>
       </div>
     </div>
