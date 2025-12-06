@@ -28,9 +28,8 @@ export interface RecipeDetails {
 
 // Calculate eco-score based on recipe ingredients and nutrition
 function calculateEcoScore(nutrition?: RecipeDetails['nutrition'], ingredients?: Array<{ original: string }>): number {
-  let score = 5; // Start neutral
+  let score = 5; 
 
-  // Check ingredients for meat/dairy keywords
   const ingredientText = ingredients?.map(i => i.original.toLowerCase()).join(' ') || '';
 
   // High impact foods (red meat, beef, lamb, pork)
@@ -57,7 +56,7 @@ function calculateEcoScore(nutrition?: RecipeDetails['nutrition'], ingredients?:
     score -= 3; 
   }
 
-  // Use nutrition as secondary indicator if available
+
   if (nutrition?.nutrients) {
     const nutrients = nutrition.nutrients;
     const fiber = nutrients.find(n => n.name === 'Fiber')?.amount || 0;
@@ -104,7 +103,6 @@ export async function getRecipeDetails(id: number) {
 
     const recipe: RecipeDetails = response.data;
 
-    // Transform to our Recipe format
     return {
       id: String(recipe.id),
       name: recipe.title,
@@ -119,7 +117,6 @@ export async function getRecipeDetails(id: number) {
   }
 }
 
-// Search recipes with full details
 export async function searchRecipesWithDetails(ingredients: string, number: number = 10) {
   try {
     const searchResults: SpoonacularRecipe[] = await searchRecipesByIngredients(ingredients, number);
@@ -135,7 +132,7 @@ export async function searchRecipesWithDetails(ingredients: string, number: numb
   }
 }
 
-// Get random recipes (for homepage when no search)
+// Get random recipes (for homepage)
 export async function getRandomRecipes(number: number = 10) {
   try {
     const response = await axios.get(`${BASE_URL}/recipes/random`, {
