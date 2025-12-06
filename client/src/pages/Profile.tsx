@@ -59,7 +59,7 @@ const Profile = () => {
     );
   }
 
-  // Filter out favorites that don't have recipe data (shouldn't happen with new implementation)
+  // Filter out favorites that don't have recipe data 
   const validFavorites = favorites.filter(fav => fav.recipe !== undefined);
 
   return (
