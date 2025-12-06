@@ -92,7 +92,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// POST new recipe (admin only - for future use)
+// POST new recipe
 router.post('/', async (req: Request, res: Response) => {
   try {
     const newRecipe: Omit<Recipe, 'id'> = req.body;
