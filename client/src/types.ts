@@ -12,4 +12,5 @@ export type Favorite = {
   userId: string;
   recipeId: string;
   addedAt: string;
+  recipe?: Recipe;
 };

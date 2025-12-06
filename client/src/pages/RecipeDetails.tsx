@@ -43,7 +43,7 @@ const RecipeDetails = () => {
       return;
     }
 
-    if (isFavorited) {
+    if (isFavorited || !recipe) {
       return;
     }
 
@@ -56,6 +56,7 @@ const RecipeDetails = () => {
         body: JSON.stringify({
           userId: user.uid,
           recipeId: id,
+          recipe: recipe,
         }),
       });
 

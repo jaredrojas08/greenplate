@@ -34,16 +34,22 @@ router.get('/', async (req: Request, res: Response) => {
 // POST new favorite
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { userId, recipeId } = req.body;
+    const { userId, recipeId, recipe } = req.body;
 
     if (!userId || !recipeId) {
       res.status(400).json({ error: 'userId and recipeId are required' });
       return;
     }
 
+    if (!recipe) {
+      res.status(400).json({ error: 'recipe data is required' });
+      return;
+    }
+
     const newFavorite = {
       userId,
       recipeId,
+      recipe,
       addedAt: new Date().toISOString(),
     };
 

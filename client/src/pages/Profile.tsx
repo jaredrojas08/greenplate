@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import type { Favorite, Recipe } from '../types';
+import type { Favorite } from '../types';
 
 const Profile = () => {
   const { user, signInWithGoogle } = useAuth();
   const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,10 +19,6 @@ const Profile = () => {
         const favResponse = await fetch(`http://localhost:8080/favorites?userId=${user.uid}`);
         const favData = await favResponse.json();
         setFavorites(favData);
-
-        const recipeResponse = await fetch('http://localhost:8080/recipes');
-        const recipeData = await recipeResponse.json();
-        setRecipes(recipeData);
       } catch (error) {
         console.error('Error fetching favorites:', error);
       } finally {
@@ -48,13 +43,6 @@ const Profile = () => {
     }
   };
 
-  const getFavoriteRecipes = () => {
-    return favorites.map(favorite => {
-      const recipe = recipes.find(r => r.id === favorite.recipeId);
-      return { favorite, recipe };
-    }).filter(item => item.recipe !== undefined);
-  };
-
   if (loading) return <p>Loading profile...</p>;
 
   if (!user) {
@@ -71,7 +59,8 @@ const Profile = () => {
     );
   }
 
-  const favoriteRecipes = getFavoriteRecipes();
+  // Filter out favorites that don't have recipe data (shouldn't happen with new implementation)
+  const validFavorites = favorites.filter(fav => fav.recipe !== undefined);
 
   return (
     <div className="profile-page">
@@ -83,18 +72,18 @@ const Profile = () => {
       </div>
 
       <div className="favorites-section">
-        <h2>My Favorite Recipes ({favoriteRecipes.length})</h2>
+        <h2>My Favorite Recipes ({validFavorites.length})</h2>
 
-        {favoriteRecipes.length === 0 ? (
+        {validFavorites.length === 0 ? (
           <p>No favorites yet. Start exploring recipes!</p>
         ) : (
           <div className="favorites-grid">
-            {favoriteRecipes.map(({ favorite, recipe }) => (
+            {validFavorites.map((favorite) => (
               <div key={favorite.id} className="favorite-card">
-                <Link to={`/recipe/${recipe!.id}`}>
-                  <img src={recipe!.imageUrl} alt={recipe!.name} />
-                  <h3>{recipe!.name}</h3>
-                  <p>Eco-Score: {recipe!.ecoScore}/10</p>
+                <Link to={`/recipe/${favorite.recipe!.id}`}>
+                  <img src={favorite.recipe!.imageUrl} alt={favorite.recipe!.name} />
+                  <h3>{favorite.recipe!.name}</h3>
+                  <p>Eco-Score: {favorite.recipe!.ecoScore}/10</p>
                 </Link>
                 <button
                   onClick={() => handleRemoveFavorite(favorite.id)}
