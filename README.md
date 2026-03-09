@@ -1,3 +1,5 @@
+# WILL DEPLOY AT A LATER DATE
+
 # GreenPlate - Sustainable Recipe Finder
 
 A web application that helps users discover recipes based on ingredients they already have and displays the environmental impact (eco-score) of each recipe.
