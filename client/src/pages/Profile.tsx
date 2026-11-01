@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { Favorite } from '../types';
+import { getFavorites, removeFavorite } from '../api';
 
 const Profile = () => {
   const { user, signInWithGoogle } = useAuth();
@@ -16,9 +17,7 @@ const Profile = () => {
       }
 
       try {
-        const favResponse = await fetch(`http://localhost:8080/favorites?userId=${user.uid}`);
-        const favData = await favResponse.json();
-        setFavorites(favData);
+        setFavorites(await getFavorites(user.uid));
       } catch (error) {
         console.error('Error fetching favorites:', error);
       } finally {
@@ -31,13 +30,8 @@ const Profile = () => {
 
   const handleRemoveFavorite = async (favoriteId: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/favorites/${favoriteId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setFavorites(favorites.filter(fav => fav.id !== favoriteId));
-      }
+      await removeFavorite(favoriteId);
+      setFavorites(favorites.filter(fav => fav.id !== favoriteId));
     } catch (error) {
       console.error('Error removing favorite:', error);
     }

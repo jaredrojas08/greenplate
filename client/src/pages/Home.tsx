@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Recipe } from '../types';
+import { getRecipes } from '../api';
 
 const Home = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -21,12 +22,7 @@ const Home = () => {
     setLoading(true);
     setCurrentLimit(6);
     try {
-      const url = ingredient
-        ? `http://localhost:8080/recipes?ingredient=${ingredient}&limit=${limit}`
-        : `http://localhost:8080/recipes?limit=${limit}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
+      const data = await getRecipes(ingredient ?? '', limit);
       setAllRecipes(data);
       setRecipes(data);
       setEcoFilter('all'); 
@@ -42,12 +38,7 @@ const Home = () => {
     setLoadingMore(true);
     const newLimit = currentLimit + 6;
     try {
-      const url = searchIngredient
-        ? `http://localhost:8080/recipes?ingredient=${searchIngredient}&limit=${newLimit}`
-        : `http://localhost:8080/recipes?limit=${newLimit}`;
-
-      const response = await fetch(url);
-      const data = await response.json();
+      const data = await getRecipes(searchIngredient, newLimit);
       setAllRecipes(data);
       setRecipes(data);
       setCurrentLimit(newLimit);

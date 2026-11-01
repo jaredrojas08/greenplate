@@ -12,45 +12,32 @@ A web application that helps users discover recipes based on ingredients they al
 - 👤 User profile with saved favorites
 - 📱 Responsive design
 
-## Getting Started
+Live at https://jaredrojas08.github.io/GreenPlate/
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm
+## How it runs
 
-### Installation
+- `client/`: the React app, deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `main`.
+- `worker/`: a Cloudflare Worker that calls Spoonacular so the API key never reaches the browser.
+- Favorites live in Firestore and are read and written straight from the client. `firestore.rules` limits each user to their own.
+- When Spoonacular is down or out of quota, the client falls back to the saved recipes in Firestore.
 
-1. Clone the repository:
+## Running locally
+
 ```bash
-git clone https://github.com/jaredrojas08/greenplate.git
-cd greenplate
-```
-
-2. Install backend dependencies:
-```bash
-cd server
+cd client
 npm install
-```
-
-3. Install frontend dependencies:
-```bash
-cd ../client
-npm install
-```
-
-### Running the Application
-
-1. Start the backend server (in `server` folder):
-```bash
 npm run dev
 ```
-Server will run on http://localhost:8080
 
-2. Start the frontend (in `client` folder, in a new terminal):
+The dev server on http://localhost:5173 uses the deployed Worker.
+
+## Deploying the Worker
+
 ```bash
-npm run dev
+cd worker
+npx wrangler deploy
+npx wrangler secret put SPOONACULAR_API_KEY
 ```
-Frontend will run on http://localhost:5173
 
 ## Author
 

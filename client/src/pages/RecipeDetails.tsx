@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import type { Recipe, Favorite } from '../types';
+import type { Recipe } from '../types';
+import { addFavorite, getFavorites, getRecipe } from '../api';
 
 const RecipeDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,17 +15,12 @@ const RecipeDetails = () => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/recipes/${id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setRecipe(data);
-        }
+        if (!id) return;
+        setRecipe(await getRecipe(id));
 
         if (user) {
-          const favResponse = await fetch(`http://localhost:8080/favorites?userId=${user.uid}`);
-          const favorites = await favResponse.json();
-          const alreadyFavorited = favorites.some((fav: Favorite) => fav.recipeId === id);
-          setIsFavorited(alreadyFavorited);
+          const favorites = await getFavorites(user.uid);
+          setIsFavorited(favorites.some((fav) => fav.recipeId === id));
         }
 
       } catch (error) {
@@ -48,21 +44,8 @@ const RecipeDetails = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/favorites', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.uid,
-          recipeId: id,
-          recipe: recipe,
-        }),
-      });
-
-      if (response.ok) {
-        setIsFavorited(true);
-      }
+      await addFavorite(user.uid, recipe);
+      setIsFavorited(true);
     } catch (error) {
       console.error('Error adding to favorites:', error);
     }
@@ -111,7 +94,7 @@ const RecipeDetails = () => {
 
         <div className="instructions-section">
           <h2>Instructions</h2>
-          <p dangerouslySetInnerHTML={{ __html: recipe.instructions }}></p>
+          <p>{recipe.instructions}</p>
         </div>
       </div>
     </div>
