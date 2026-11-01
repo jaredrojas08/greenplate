@@ -10,7 +10,7 @@ A web application that helps users discover recipes based on ingredients they al
 - 👤 User profile with saved favorites
 - 📱 Responsive design
 
-Live at https://jaredrojas08.github.io/GreenPlate/
+Live at https://jaredrojas08.github.io/greenplate/
 
 ## How it runs
 
