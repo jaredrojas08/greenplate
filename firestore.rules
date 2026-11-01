@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// The client talks to Firestore directly, so these rules are the only thing
+// keeping one user out of another's favorites.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Saved recipes are the fallback when Spoonacular is down. Read-only.
+    match /recipes/{recipeId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /favorites/{favoriteId} {
+      allow read, delete: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.keys().hasOnly(['userId', 'recipeId', 'recipe', 'addedAt']);
+      allow update: if false;
+    }
+  }
+}

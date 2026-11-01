@@ -1,0 +1,11 @@
+{
+	"name": "greenplate-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-01",
+	"workers_dev": true,
+	"vars": {
+		// The site on GitHub Pages, plus the Vite dev server.
+		"ALLOWED_ORIGINS": "https://jaredrojas08.github.io,http://localhost:5173"
+	}
+	// SPOONACULAR_API_KEY is a secret: npx wrangler secret put SPOONACULAR_API_KEY
+}
