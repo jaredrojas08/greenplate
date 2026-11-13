@@ -17,7 +17,8 @@ Live at https://jaredrojas08.github.io/greenplate/
 - `client/`: the React app, deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `main`.
 - `worker/`: a Cloudflare Worker that calls Spoonacular so the API key never reaches the browser.
 - Favorites live in Firestore and are read and written straight from the client. `firestore.rules` limits each user to their own.
-- When Spoonacular is down or out of quota, the client falls back to the saved recipes in Firestore.
+- The Worker saves every recipe it fetches in Cloudflare KV (`RECIPES`), with no expiry. Repeat searches and the daily home picks come from KV, and once the Spoonacular quota runs out, searches match against every saved recipe.
+- If KV has nothing that matches, the client falls back to the seeded recipes in Firestore.
 
 ## Running locally
 
