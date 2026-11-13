@@ -4,6 +4,7 @@
 interface Env {
   SPOONACULAR_API_KEY: string;
   ALLOWED_ORIGINS: string;
+  RECIPES: KVNamespace;
 }
 
 type Recipe = {
@@ -78,6 +79,101 @@ async function spoonacular<T>(env: Env, path: string, params: Record<string, str
   return response.json() as Promise<T>;
 }
 
+// KV keys: recipe:<id> holds a full recipe forever, search:<terms>:<limit> holds the
+// ids a search returned, random:<date> holds one day's random picks.
+type SavedMeta = { ingredients: string };
+
+async function saveRecipes(env: Env, recipes: Recipe[]): Promise<void> {
+  await Promise.all(
+    recipes.map((recipe) =>
+      env.RECIPES.put(`recipe:${recipe.id}`, JSON.stringify(recipe), {
+        // KV caps metadata at 1 KB, which is enough to match ingredient terms without a read.
+        metadata: { ingredients: recipe.ingredients.join(' | ').toLowerCase().slice(0, 900) } satisfies SavedMeta
+      })
+    )
+  );
+}
+
+async function loadRecipes(env: Env, ids: string[]): Promise<Recipe[]> {
+  const found = await Promise.all(ids.map((id) => env.RECIPES.get<Recipe>(`recipe:${id}`, 'json')));
+  return found.filter((recipe): recipe is Recipe => recipe !== null);
+}
+
+async function savedIds(env: Env, terms: string[]): Promise<string[]> {
+  const ids: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.RECIPES.list<SavedMeta>({ prefix: 'recipe:', cursor });
+    for (const key of page.keys) {
+      const text = key.metadata?.ingredients ?? '';
+      if (terms.every((term) => text.includes(term))) ids.push(key.name.slice('recipe:'.length));
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  return ids;
+}
+
+function shuffled<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// Repeat searches cost no quota, and when the quota runs out every saved recipe can still match.
+async function findRecipes(env: Env, ingredient: string, limit: number): Promise<Recipe[]> {
+  const terms = [...new Set(ingredient.toLowerCase().split(',').map((t) => t.trim()).filter(Boolean))].sort();
+  const searchKey = `search:${terms.join(',')}:${limit}`;
+  const cachedIds = await env.RECIPES.get<string[]>(searchKey, 'json');
+  if (cachedIds) {
+    const cached = await loadRecipes(env, cachedIds);
+    if (cached.length === cachedIds.length) return cached;
+  }
+  try {
+    const recipes = await searchRecipes(env, terms.join(','), limit);
+    await saveRecipes(env, recipes);
+    await env.RECIPES.put(searchKey, JSON.stringify(recipes.map((r) => r.id)));
+    return recipes;
+  } catch (error) {
+    const saved = await loadRecipes(env, (await savedIds(env, terms)).slice(0, limit));
+    if (saved.length === 0) throw error;
+    return saved;
+  }
+}
+
+async function homeRecipes(env: Env, limit: number): Promise<Recipe[]> {
+  // One random draw per day, so page loads don't spend quota.
+  const dayKey = `random:${new Date().toISOString().slice(0, 10)}:${limit}`;
+  const todaysIds = await env.RECIPES.get<string[]>(dayKey, 'json');
+  if (todaysIds) {
+    const today = await loadRecipes(env, todaysIds);
+    if (today.length === todaysIds.length) return today;
+  }
+  try {
+    const recipes = await randomRecipes(env, limit);
+    await saveRecipes(env, recipes);
+    await env.RECIPES.put(dayKey, JSON.stringify(recipes.map((r) => r.id)), { expirationTtl: 2 * 86400 });
+    return recipes;
+  } catch (error) {
+    const saved = await loadRecipes(env, shuffled(await savedIds(env, [])).slice(0, limit));
+    if (saved.length === 0) throw error;
+    return saved;
+  }
+}
+
+async function oneRecipe(env: Env, id: string): Promise<Recipe> {
+  const saved = await env.RECIPES.get<Recipe>(`recipe:${id}`, 'json');
+  if (saved) return saved;
+  const details = await spoonacular<SpoonacularDetails>(env, `/recipes/${id}/information`, {
+    includeNutrition: 'true'
+  });
+  const recipe = toRecipe(details);
+  await saveRecipes(env, [recipe]);
+  return recipe;
+}
+
 async function searchRecipes(env: Env, ingredients: string, limit: number): Promise<Recipe[]> {
   const matches = await spoonacular<Array<{ id: number }>>(env, '/recipes/findByIngredients', {
     ingredients,
@@ -111,17 +207,12 @@ async function route(request: Request, env: Env): Promise<Response> {
     const ingredient = url.searchParams.get('ingredient')?.trim().slice(0, 200) ?? '';
     const requested = Number.parseInt(url.searchParams.get('limit') ?? '6', 10);
     const limit = Number.isNaN(requested) ? 6 : Math.max(1, Math.min(MAX_LIMIT, requested));
-    const recipes = ingredient ? await searchRecipes(env, ingredient, limit) : await randomRecipes(env, limit);
+    const recipes = ingredient ? await findRecipes(env, ingredient, limit) : await homeRecipes(env, limit);
     return json(recipes);
   }
 
   const match = url.pathname.match(/^\/recipes\/(\d+)$/);
-  if (match) {
-    const details = await spoonacular<SpoonacularDetails>(env, `/recipes/${match[1]}/information`, {
-      includeNutrition: 'true'
-    });
-    return json(toRecipe(details));
-  }
+  if (match) return json(await oneRecipe(env, match[1]));
 
   return json({ error: 'Not found' }, 404);
 }

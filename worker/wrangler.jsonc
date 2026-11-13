@@ -6,6 +6,8 @@
 	"vars": {
 		// The site on GitHub Pages, plus the Vite dev server.
 		"ALLOWED_ORIGINS": "https://jaredrojas08.github.io,http://localhost:5173"
-	}
+	},
+	// Every recipe fetched from Spoonacular, kept with no expiry.
+	"kv_namespaces": [{ "binding": "RECIPES", "id": "24816449a9ee415b8e96e3fb53dc2f1f" }]
 	// SPOONACULAR_API_KEY is a secret: npx wrangler secret put SPOONACULAR_API_KEY
 }
